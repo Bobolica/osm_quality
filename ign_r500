@@ -1,0 +1,83 @@
+-- comparatif quantitatif de la voirie carrossable entre 
+-- la base ign_500 et osm par communes
+-- la base r500 est disponible sous licence ouverte etalab 
+
+-- en entrée : 
+--    planet_osm_line,
+--    base_r500
+--    communes
+
+
+
+-- calcul linéaire routes seulement pour OSM
+ALTER TABLE communes
+drop column if exists osm_road_length;
+ALTER TABLE communes
+   ADD COLUMN osm_road_length double precision;
+UPDATE ONLY communes
+   SET osm_road_length = (
+       SELECT DISTINCT
+           sum(st_length(st_intersection(communes.geom,planet_osm_line.way)))
+       FROM
+           planet_osm_line
+       WHERE
+           communes.geom && planet_osm_line.way
+           AND (
+               planet_osm_line.highway = 'motorway'
+               OR
+               planet_osm_line.highway = 'trunk'
+               OR
+               planet_osm_line.highway = 'primary'
+               OR
+               planet_osm_line.highway = 'secondary'
+               OR
+               planet_osm_line.highway = 'tertiary'
+               OR
+               planet_osm_line.highway = 'unclassified'
+               OR
+               planet_osm_line.highway = 'residential'
+               OR
+               planet_osm_line.highway = 'service'
+               OR
+               planet_osm_line.highway = 'road'
+               OR
+               planet_osm_line.highway = 'primary_link'
+               OR
+               planet_osm_line.highway = 'secondary_link'
+               OR
+               planet_osm_line.highway = 'tertiary_link'
+           )
+       );
+
+
+
+-- calcul linéaire routes seulement pour IGN
+ALTER TABLE communes
+drop column if exists ign_r500;
+ALTER TABLE communes
+   ADD COLUMN ign_r500 double precision;
+UPDATE ONLY communes
+SET ign_r500 = (
+       SELECT DISTINCT
+           sum(st_length(st_intersection(communes.geom,r500.geom)))
+       FROM
+           r500
+       WHERE
+           communes.geom && r500.geom
+       );
+
+
+
+--modification de la table communes_view avec le ration ign_r500
+       
+ALTER TABLE communes_view
+drop column if exists ign_r500;
+ALTER TABLE communes_view
+   ADD COLUMN ign_r500 double precision;
+UPDATE ONLY communes_view
+SET ign_r500 = communes.osm_road_length / NULLIF(communes.ign_r500, 0::double precision)
+from communes
+where 
+communes.id = communes_view.id
+
+
