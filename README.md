@@ -21,3 +21,10 @@ IGN_bd_r500
 Une distinction entre le réseau routier carrossable et non carrossable est réalisé. 
 
 D'autres éléments d'analyse suiverons, par l'hydrographie, la correspondance sémantique, la précision géométrique, etc.
+
+
+Les sources de ces travaux se trouvent dans :
+
+Postgis In action de Regina O. Obe, Leo S. Hsu
+
+L'analyse réalisée par Fabrice Phung, contributeur sur geOrchestra et membre de l'équipe de Géobretagne
