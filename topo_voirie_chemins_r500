@@ -22,14 +22,12 @@
   --ratio_r500
 
 
--- calcul linéaire routes seulement pour OSM
+
 -- calcul linéaire routes seulement pour OSM
 ALTER TABLE communes
   drop column if exists osm_route;
-
 ALTER TABLE  communes
-   ADD COLUMN osm_route double precision;
-   
+   ADD COLUMN osm_route double precision; 
 UPDATE ONLY communes
    SET osm_route = (
        SELECT DISTINCT
@@ -99,47 +97,32 @@ ALTER TABLE communes
 UPDATE ONLY communes
 SET ign_route_topo = (
        SELECT DISTINCT
-           sum(st_length(st_intersection(communes.geom,ign_route.way)))
+           sum(st_length(st_intersection(communes.geom,ign_route.geom)))
        FROM
            ign_route
        WHERE
-           communes.geom && ign_route.way
-           AND (
-               ign_route."NATURE" = 'Bretelle'
-               OR
-               ign_route."NATURE" = 'Route à 2 chaussées'
-               OR
-               ign_route."NATURE" = 'Route à 1 chaussée'
-               OR
-               ign_route."NATURE" = 'Autoroute'
-           )
-       );
+           communes.geom && ign_route.geom
+           AND ign_route.nature in ('Bretelle','Route à 1 chaussé','Quasi-autoroute','Route à 2 chaussé',
+'Autoroute'));
+
+
 
 -- calcul linéaire chemin seulement pour IGN
 ALTER TABLE  communes
-drop column if exists ign_chemin;
+drop column if exists ign_chemin_topo;
 ALTER TABLE  communes
-   ADD COLUMN ign_chemin double precision;
+   ADD COLUMN ign_chemin_topo double precision;
    UPDATE ONLY communes
-   SET ign_chemin = (
+   SET ign_chemin_topo = (
        SELECT DISTINCT
-           sum(st_length(st_intersection(communes.geom,ign_route.way)))
+           sum(st_length(st_intersection(communes.geom,ign_route.geom)))
        FROM
            ign_route
        WHERE
-           communes.geom && ign_route.way
+           communes.geom && ign_route.geom
            AND (
-               ign_route."NATURE" = 'NATURE'
-               OR
-               ign_route."NATURE" = 'Chemin'
-               OR
-               ign_route."NATURE" = 'Route empierre'
-               OR
-               ign_route."NATURE" = 'Escalier'
-               OR
-               ign_route."NATURE" = 'Sentier'
-           )
-       );
+               ign_route.nature in ('Chemin','Escalier','Piste cyclable','Route empierrée','Sentier')   
+       ));
 
        	-- calcul linéaire routes500 seulement pour IGN
 	ALTER TABLE communes
@@ -157,12 +140,14 @@ ALTER TABLE  communes
 	       );
 
 -- creation osm_view avec ratios
+
+drop table if exists communes_view;
 	CREATE TABLE communes_view as 
 	select 
 	id, 
 	communes.nom,
 	communes.geom,
 	communes.osm_route / NULLIF(communes.ign_route_topo, 0::double precision) as ratio_topo_route,
-	communes.osm_chemin / NULLIF(communes.ign_chemin, 0::double precision) as ratio_topo_chemin,
+	communes.osm_chemin / NULLIF(communes.ign_chemin_topo, 0::double precision) as ratio_topo_chemin,
 	communes.osm_route / NULLIF(communes.ign_r500, 0::double precision) as ratio_r500
 	from communes;
