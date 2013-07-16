@@ -1,0 +1,49 @@
+-- hydro simple qui vient s'ajouter au communes de référence
+
+-- calcul linéaire hydro seulement pour OSM
+ALTER TABLE communes
+drop column if exists osm_hydro;
+ALTER TABLE communes
+   ADD COLUMN osm_hydro double precision;
+UPDATE ONLY communes
+   SET osm_hydro = (
+       SELECT DISTINCT
+           sum(st_length(st_intersection(communes.geom,planet_osm_line.way)))
+       FROM
+           planet_osm_line
+       WHERE
+           communes.geom && planet_osm_line.way
+           AND ( planet_osm_line.waterway <> 'NULL' )
+       );
+
+
+
+-- calcul linéaire hydro seulement pour IGN
+ALTER TABLE communes
+drop column if exists ign_hydro;
+ALTER TABLE communes
+   ADD COLUMN ign_hydro double precision;
+UPDATE ONLY communes
+SET ign_hydro = (
+       SELECT DISTINCT
+           sum(st_length(st_intersection(communes.geom,ign_hydro.geom)))
+       FROM
+           ign_hydro
+       WHERE
+           communes.geom && ign_hydro.geom
+       );
+
+
+
+--modification de la table communes_ratio avec le ration ign_hydro
+       
+ALTER TABLE communes_view
+drop column if exists ratio_hydro_topo;
+ALTER TABLE communes_view
+   ADD COLUMN ratio_hydro_topo double precision;
+UPDATE ONLY communes_view
+SET ratio_hydro_topo = communes.osm_hydro / NULLIF(communes.ign_hydro, 0::double precision)
+from communes
+where 
+communes.id = communes_view.id
+
