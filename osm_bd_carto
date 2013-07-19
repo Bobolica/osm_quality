@@ -1,0 +1,26 @@
+-- analyse comparée entre bd_carto de l'ign et données OSM sur les routes principales
+
+-- calcul linéaire routes500 seulement pour IGN
+	ALTER TABLE communes
+	drop column if exists ign_bd_carto;
+	ALTER TABLE communes
+	   ADD COLUMN ign_bd_carto double precision;
+	UPDATE ONLY communes
+	SET ign_bd_carto = (
+	       SELECT DISTINCT
+		   sum(st_length(st_intersection(communes.geom,bd_carto.geom)))
+	       FROM
+		   bd_carto
+	       WHERE
+		   communes.geom && bd_carto.geom
+	       );
+
+	       ALTER TABLE communes_view
+drop column if exists ratio_bd_carto;
+ALTER TABLE communes_view
+   ADD COLUMN ratio_bd_carto double precision;
+UPDATE ONLY communes_view
+SET ratio_bd_carto = communes.osm_route / NULLIF(communes.ign_bd_carto, 0::double precision)
+from communes
+where 
+communes.id = communes_view.id
