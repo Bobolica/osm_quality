@@ -36,32 +36,12 @@ UPDATE ONLY communes
            planet_osm_line
        WHERE
            communes.geom && planet_osm_line.way
-           AND (
-               planet_osm_line.highway = 'motorway'
-               OR
-               planet_osm_line.highway = 'trunk'
-               OR
-               planet_osm_line.highway = 'primary'
-               OR
-               planet_osm_line.highway = 'secondary'
-               OR
-               planet_osm_line.highway = 'tertiary'
-               OR
-               planet_osm_line.highway = 'unclassified'
-               OR
-               planet_osm_line.highway = 'residential'
-               OR
-               planet_osm_line.highway = 'service'
-               OR
-               planet_osm_line.highway = 'road'
-               OR
-               planet_osm_line.highway = 'primary_link'
-               OR
-               planet_osm_line.highway = 'secondary_link'
-               OR
-               planet_osm_line.highway = 'tertiary_link'
-           )
+           AND 
+               planet_osm_line.highway in('motorway','trunk','primary','secondary','tertiary','unclassified','residential','service','road','primary_link','secondary_link','tertiary_link')
        );
+
+
+
 
        -- calcul linéaire chemin seulement pour OSM
 ALTER TABLE communes 
@@ -76,17 +56,8 @@ UPDATE ONLY communes
            planet_osm_line
        WHERE
            communes.geom && planet_osm_line.way
-           AND (
-               planet_osm_line.highway = 'track'
-               OR
-               planet_osm_line.highway = 'path'
-               OR
-               planet_osm_line.highway = 'footway'
-               OR
-               planet_osm_line.highway = 'bridleway'
-               OR
-               planet_osm_line.highway = 'cycleway'
-               )
+           AND planet_osm_line.highway in ('track','path','footway','bridleway','cycleway')
+               
        );
 
 -- calcul linéaire routes seulement pour IGN
@@ -102,9 +73,13 @@ SET ign_route_topo = (
            ign_route
        WHERE
            communes.geom && ign_route.geom
-           AND ign_route.nature in ('Bretelle','Route à 1 chaussé','Quasi-autoroute','Route à 2 chaussé',
-'Autoroute'));
-
+           and
+(ign_route.nature in ('Bretelle',
+'Route à 2 chaussé',
+'Piste cyclable',
+'Route à 1 chaussé',
+'Quasi-autoroute',
+'Autoroute')));
 
 
 -- calcul linéaire chemin seulement pour IGN
@@ -124,22 +99,49 @@ ALTER TABLE  communes
                ign_route.nature in ('Chemin','Escalier','Piste cyclable','Route empierrée','Sentier')   
        ));
 
-       	-- calcul linéaire routes500 seulement pour IGN
-	ALTER TABLE communes
-	drop column if exists ign_r500;
-	ALTER TABLE communes
-	   ADD COLUMN ign_r500 double precision;
-	UPDATE ONLY communes
-	SET ign_r500 = (
-	       SELECT DISTINCT
-		   sum(st_length(st_intersection(communes.geom,r500.geom)))
-	       FROM
-		   r500
-	       WHERE
-		   communes.geom && r500.geom
-	       );
 
--- creation osm_view avec ratios
+------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+-- calcul linéaire hydro seulement pour OSM
+ALTER TABLE communes
+drop column if exists osm_hydro;
+ALTER TABLE communes
+   ADD COLUMN osm_hydro double precision;
+UPDATE ONLY communes
+   SET osm_hydro = (
+       SELECT DISTINCT
+           sum(st_length(st_intersection(communes.geom,planet_osm_line.way)))
+       FROM
+           planet_osm_line
+       WHERE
+           communes.geom && planet_osm_line.way
+           AND ( planet_osm_line.waterway <> 'NULL' )
+       );
+
+
+
+-- calcul linéaire hydro seulement pour IGN
+ALTER TABLE communes
+drop column if exists ign_hydro;
+ALTER TABLE communes
+   ADD COLUMN ign_hydro double precision;
+UPDATE ONLY communes
+SET ign_hydro = (
+       SELECT DISTINCT
+           sum(st_length(st_intersection(communes.geom,ign_hydro.geom)))
+       FROM
+           ign_hydro
+       WHERE
+           communes.geom && ign_hydro.geom
+       );
+
+
+------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------
+
+-- creation commune_view avec ratios
 
 drop table if exists communes_view;
 	CREATE TABLE communes_view as 
@@ -149,5 +151,5 @@ drop table if exists communes_view;
 	communes.geom,
 	communes.osm_route / NULLIF(communes.ign_route_topo, 0::double precision) as ratio_topo_route,
 	communes.osm_chemin / NULLIF(communes.ign_chemin_topo, 0::double precision) as ratio_topo_chemin,
-	communes.osm_route / NULLIF(communes.ign_r500, 0::double precision) as ratio_r500
+	communes.osm_hydro / NULLIF(communes.ign_hydro, 0::double precision) as ratio_hydro
 	from communes;
