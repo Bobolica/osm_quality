@@ -149,6 +149,7 @@ drop table if exists communes_view;
 	id, 
 	communes.nom,
 	communes.geom,
+	communes.code_insee,
 	communes.osm_route / NULLIF(communes.ign_route_topo, 0::double precision) as ratio_topo_route,
 	communes.osm_chemin / NULLIF(communes.ign_chemin_topo, 0::double precision) as ratio_topo_chemin,
 	communes.osm_hydro / NULLIF(communes.ign_hydro, 0::double precision) as ratio_hydro
