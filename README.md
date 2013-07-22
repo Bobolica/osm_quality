@@ -28,3 +28,11 @@ Les sources de ces travaux se trouvent dans :
 Postgis In action de Regina O. Obe, Leo S. Hsu
 
 L'analyse réalisée par Fabrice Phung, contributeur sur geOrchestra et membre de l'équipe de Géobretagne
+
+
+La réalisation de ces analyses est sous licence MIT. 
+
+Les données exploitées ne sont pas toutes sous licenc ouverte. elle dépendent donc des conditions d'utilisation 
+établies par L'IGN.
+
+L'exploitation du RGE est réalisée dans le cadre du PNR Millevaches en Limousin sans vocation commerciale
