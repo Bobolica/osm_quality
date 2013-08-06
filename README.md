@@ -1,4 +1,4 @@
-osm_ign
+osm_quality
 =======
 
 quelques billes en sql pour faire une analyse quantitative comparée du réseau de voirie entre la base OpenStreetMap et la base IGN. 
@@ -13,7 +13,7 @@ Elle prend pour référence les informations de L'IGN car elle s'inscrit dans un
 de référentiel de travail. 
 
 
-l'analyse comparée est réalisée entre :
+l'analyse comparée est réalisée avec les produits :
 IGN_bd_topo
 IGN_bd_carto
 IGN_bd_r500
@@ -22,13 +22,16 @@ Une distinction entre le réseau routier carrossable et non carrossable est réa
 
 D'autres éléments d'analyse suiverons, par l'hydrographie, la correspondance sémantique, la précision géométrique, etc.
 
-
-Les sources de ces travaux se trouvent dans :
+sources de ces travaux 
+=======
 
 Postgis In action de Regina O. Obe, Leo S. Hsu
-
 L'analyse réalisée par Fabrice Phung, contributeur sur geOrchestra et membre de l'équipe de Géobretagne
+Les travaux de Girres Touya au laboratoire COGIT de l'IGN
+Les travaux sur la qualité d'OpenStreetMap réalisé par Ophélie Petit AUBERMartin et BILLONPierrick - 2011
+La thèse de Carmen BRANDO ESCOBAR
 
+=======
 
 La réalisation de ces analyses est sous licence MIT. 
 
