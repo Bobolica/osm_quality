@@ -1,0 +1,15 @@
+-- le but de cette analyse est d'avoir une distance moyenne par commune entre les informations de la base IGN et
+-- la base OSM.
+-- le travail se décompose en plusieurs temps :
+-- 
+
+
+
+
+
+
+SELECT (gd).path[1] As pos, (gd).geom As geom
+FROM (SELECT ST_DumpPoints(way) As gd 
+ FROM planet_osm_line
+ limit 100000) As foo
+;
